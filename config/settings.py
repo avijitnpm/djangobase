@@ -75,6 +75,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+from config.observability import init_observability
+
+init_observability()
+
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
