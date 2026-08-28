@@ -1,0 +1,2 @@
+class KindeNotConfiguredError(RuntimeError):
+    pass

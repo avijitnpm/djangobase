@@ -38,6 +38,7 @@ ALLOWED_HOSTS = [
 
 INSTALLED_APPS = [
     'accounts',
+    'identity',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -135,6 +136,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
+KINDE_CLIENT_ID = os.environ.get("KINDE_CLIENT_ID", "")
+KINDE_CLIENT_SECRET = os.environ.get("KINDE_CLIENT_SECRET", "")
+KINDE_HOST = os.environ.get("KINDE_HOST", "")
+KINDE_ISSUER_URL = os.environ.get("KINDE_ISSUER_URL", "")
+KINDE_REDIRECT_URI = os.environ.get("KINDE_REDIRECT_URI", "")
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
