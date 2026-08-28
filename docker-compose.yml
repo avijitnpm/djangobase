@@ -1,4 +1,23 @@
 services:
+  app:
+    build: .
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-$$agvz@6b8yog)w+z=m*59p3$$#eh19(02y(6paq(jb0jzf2b8&_}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-}
+      POSTGRES_DB: ${POSTGRES_DB:-djangoninja}
+      POSTGRES_USER: ${POSTGRES_USER:-djangoninja}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-djangoninja}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
