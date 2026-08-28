@@ -18,6 +18,7 @@ env/
 ENV/
 .env
 .env.*
+!.env.example
 
 # Installers / logs
 pip-log.txt
