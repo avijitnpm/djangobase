@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Django modular-monolith platform"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "Django==6.1",
+]
 
 [build-system]
 requires = ["setuptools>=61"]
