@@ -210,16 +210,15 @@ class AdversarialSecurityTests(TestCase):
         s = self.client.session
         s[SESSION_KEY] = fake
         s.save()
-        # get_authenticated_user_id returns UUID (well-formed) but user does not exist
         from django.test import RequestFactory
         rf = RequestFactory()
         req = rf.get("/")
         req.session = s
-        uid = get_authenticated_user_id(req)
-        self.assertEqual(str(uid), fake)
+        self.assertIsNone(get_authenticated_user_id(req))
+        self.assertFalse(is_authenticated(req))
         User = get_user_model()
-        self.assertFalse(User.objects.filter(id=uid).exists())
-        self.assertEqual(OrganizationMembership.objects.filter(user_id=uid).count(), 0)
+        self.assertFalse(User.objects.filter(id=fake).exists())
+        self.assertEqual(OrganizationMembership.objects.filter(user_id=fake).count(), 0)
 
     # 12 logout followed by authenticated request
     def test_12_logout_then_request_fails(self):
@@ -365,3 +364,39 @@ class AdversarialSecurityTests(TestCase):
             cur.execute("SELECT count(*) FROM accounts_tenantresource")
             self.assertEqual(cur.fetchone()[0], 0)
             cur.execute("RESET ROLE")
+
+    def test_deleted_user_unauthenticated(self):
+        User = get_user_model()
+        u = User.objects.create(username="to_delete")
+        s = self.client.session
+        s[SESSION_KEY] = str(u.id)
+        s.save()
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        req = rf.get("/")
+        req.session = s
+        self.assertTrue(is_authenticated(req))
+        u.delete()
+        self.assertIsNone(get_authenticated_user_id(req))
+        self.assertFalse(is_authenticated(req))
+
+    def test_random_valid_uuid_unauthenticated(self):
+        fake = str(uuid.uuid4())
+        s = self.client.session
+        s[SESSION_KEY] = fake
+        s.save()
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        req = rf.get("/")
+        req.session = s
+        self.assertIsNone(get_authenticated_user_id(req))
+        self.assertFalse(is_authenticated(req))
+
+    def test_unverified_jwt_fallback_does_not_authenticate(self):
+        self._set_tx(state="st")
+        m = self._mock_oauth(token_data={"access_token": "header.payload.sig"})
+        with patch("identity.views.get_kinde_oauth", return_value=m), patch("kinde_sdk.core.helpers.get_user_details", new=AsyncMock(side_effect=Exception("userinfo failed"))):
+            resp = self.client.get("/auth/callback?code=c&state=st")
+        self.assertEqual(resp.status_code, 400)
+        self.assertNotIn(SESSION_KEY, self.client.session)
+        self.assertEqual(ExternalIdentity.objects.filter(external_id="header.payload.sig").count(), 0)

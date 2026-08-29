@@ -106,14 +106,8 @@ def callback(request):
         finally:
             TokenManager.reset_instances()
     except Exception:
-        try:
-            import jwt
-
-            claims = jwt.decode(access_token, options={"verify_signature": False})
-            user_info = claims
-        except Exception:
-            _clear_oauth_session(request)
-            return HttpResponse("Failed to retrieve user", status=400)
+        _clear_oauth_session(request)
+        return HttpResponse("Failed to retrieve user", status=400)
 
     external_id = str(user_info.get("sub") or user_info.get("id") or "").strip()
     if not external_id:

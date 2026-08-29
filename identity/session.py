@@ -12,8 +12,27 @@ def get_authenticated_user_id(request):
     import uuid
 
     try:
-        return uuid.UUID(str(value))
+        uid = uuid.UUID(str(value))
     except (ValueError, AttributeError):
+        return None
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    if not User.objects.filter(id=uid).exists():
+        return None
+    return uid
+
+
+def get_authenticated_user(request):
+    uid = get_authenticated_user_id(request)
+    if uid is None:
+        return None
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    try:
+        return User.objects.get(id=uid)
+    except User.DoesNotExist:
         return None
 
 
