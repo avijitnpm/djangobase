@@ -115,7 +115,7 @@ def callback(request):
             _clear_oauth_session(request)
             return HttpResponse("Failed to retrieve user", status=400)
 
-    external_id = str(user_info.get("sub") or user_info.get("id") or "")
+    external_id = str(user_info.get("sub") or user_info.get("id") or "").strip()
     if not external_id:
         _clear_oauth_session(request)
         return HttpResponse("Missing subject", status=400)
@@ -123,20 +123,24 @@ def callback(request):
     email = (user_info.get("email") or "").strip().lower()
 
     User = get_user_model()
-    with transaction.atomic():
+    try:
+        ident = ExternalIdentity.objects.select_related("user").get(provider="kinde", external_id=external_id)
+        user = ident.user
+    except ExternalIdentity.DoesNotExist:
+        username = f"kinde_{external_id}"
+        base = username[:150]
+        username = base
+        suffix = 0
+        while User.objects.filter(username=username).exists():
+            suffix += 1
+            username = f"{base[:140]}_{suffix}"
         try:
+            with transaction.atomic():
+                user = User.objects.create(username=username, email=email)
+                ExternalIdentity.objects.create(provider="kinde", external_id=external_id, user=user)
+        except Exception:
             ident = ExternalIdentity.objects.select_related("user").get(provider="kinde", external_id=external_id)
             user = ident.user
-        except ExternalIdentity.DoesNotExist:
-            username = f"kinde_{external_id}"
-            base = username[:150]
-            username = base
-            suffix = 0
-            while User.objects.filter(username=username).exists():
-                suffix += 1
-                username = f"{base[:140]}_{suffix}"
-            user = User.objects.create(username=username, email=email)
-            ExternalIdentity.objects.create(provider="kinde", external_id=external_id, user=user)
 
     set_authenticated_user(request, user.id)
     _clear_oauth_session(request)
