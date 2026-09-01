@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["config*", "health*", "accounts*", "identity*", "authorization*"]
+include = ["config*", "health*", "accounts*", "identity*", "authorization*", "audit*"]
 
 [build-system]
 requires = ["setuptools>=61"]
